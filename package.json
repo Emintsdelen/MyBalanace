@@ -9,10 +9,23 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~3.2.3",
+    "@react-native-async-storage/async-storage": "^2.0.0",
+    "axios": "^1.7.7",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
     "expo": "~51.0.28",
     "expo-status-bar": "~1.12.1",
+    "express": "^4.21.0",
+    "mysql2": "^3.11.2",
     "react": "18.2.0",
-    "react-native": "0.74.5"
+    "react-dom": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-device-info": "^13.0.0",
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-uuid": "^2.0.2",
+    "react-native-web": "~0.19.10",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
