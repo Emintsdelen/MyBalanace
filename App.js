@@ -12,7 +12,122 @@ export default function App() {
   const [modalCardIdText, setModalCardIdText] = useState('');
   const [modalTagText, setModalTagText] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoKey, setInfoKey] = useState(null);
   const [views, setViews] = useState([]);
+
+  const editCard = async () => {
+    if (modalCardIdText.length >= 11) {
+      setInfoModalVisible(!infoModalVisible);
+      let cardid = modalCardIdText;
+      let tagtext = modalTagText;
+      setModalCardIdText('');
+      setModalTagText('');
+      let cards = '';
+
+      try {
+        const response = await axios.get(API_URL);
+        for (var i=0; i < response.data['length']; i++) {
+          if (response.data[i]['UUID'] === await AsyncStorage.getItem('device_id')) {
+            cards = response.data[i]['Cards'];
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+
+      const cleanedCards = cards.replace(/,$/, '');
+      const card = cleanedCards.split(',');
+      card[infoKey] = cardid + '-' + tagtext;
+      
+      cards = '';
+      for (var i=0; i < card.length; i++) {
+        cards += card[i];
+        cards += ',';
+      }
+
+      try {
+        const response = await axios.put(API_URL + '/' + await AsyncStorage.getItem('device_id'), {
+          Cards: cards,
+          append: false
+        });
+      } catch (error) {
+        console.error('Error adding card:', error);
+      }
+    }
+  };
+
+  const deleteCard = async () => {
+    setInfoModalVisible(!infoModalVisible);
+    setModalCardIdText('');
+    setModalTagText('');
+    let cards = '';
+
+    try {
+      const response = await axios.get(API_URL);
+      for (var i=0; i < response.data['length']; i++) {
+        if (response.data[i]['UUID'] === await AsyncStorage.getItem('device_id')) {
+          cards = response.data[i]['Cards'];
+        }
+      }
+    } catch (error) {
+      console.error('Error updating data:', error);
+    }
+
+    const cleanedCards = cards.replace(/,$/, '');
+    const card = cleanedCards.split(',');
+    card[infoKey] = '';
+    
+    cards = '';
+    for (var i=0; i < card.length; i++) {
+      cards += card[i];
+      if (card[i] !== '') {
+        cards += ',';
+      }
+    }
+
+    try {
+      const response = await axios.put(API_URL + '/' + await AsyncStorage.getItem('device_id'), {
+        Cards: cards,
+        append: false
+      });
+    } catch (error) {
+      console.error('Error deleting card:', error);
+    }
+  };
+
+  const cardInfo = async (key) => {
+    setInfoKey(key);
+    let cards = '';
+
+    try {
+      const response = await axios.get(API_URL);
+      for (var i=0; i < response.data['length']; i++) {
+        if (response.data[i]['UUID'] === await AsyncStorage.getItem('device_id')) {
+          cards = response.data[i]['Cards'];
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+
+    const cleanedCards = cards.replace(/,$/, '');
+    const card = cleanedCards.split(',');
+    const infocardtag = card[key].split('-')[1];
+    const infocardid = card[key].split('-')[0];
+
+    setModalTagText(infocardtag);
+    setModalCardIdText(infocardid);
+    setInfoModalVisible(true);
+  };
+
+  const goBack = async () => {
+    setInfoModalVisible(false);
+    setModalVisible(false);
+    setInfoKey(null);
+    setModalCardIdText('');
+    setModalTagText('');
+  };
 
   const addCard = async () => {
     if (modalCardIdText.length >= 11) {
@@ -92,7 +207,7 @@ export default function App() {
         }
       }
       setViews(newViews);
-    }, 100);
+    }, 1000);
   };
   
   useEffect(() => {
@@ -188,7 +303,7 @@ export default function App() {
                   alignItems: 'flex-end',
                   justifyContent: 'center',
                 }}>
-                  <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>
+                  <TouchableOpacity onPress={() => goBack()}>
                     <Image style={{
                       height: 25,
                       width: 25
@@ -211,13 +326,100 @@ export default function App() {
                   onChangeText={setModalCardIdText}
                   value={modalCardIdText}
                 />
-                <Button title="Add Card" onPress={() => {addCard(); loadCards();}} />
+                <TouchableOpacity style={{
+                  borderRadius: 15,
+                  padding: 10,
+                  backgroundColor: '#258fff'
+                }} onPress={() => {addCard(); loadCards();}}>
+                  <Text style={{
+                    color: '#fff'
+                  }}>Add Card</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={infoModalVisible}
+          onRequestClose={() => {
+            setInfoModalVisible(!infoModalVisible);
+          }}>
+          <View style={styles.modalBackground}>
+            <View style={styles.modalView}>
+              <View style={styles.modalHead}>
+                <View style={{
+                  width: '25%',
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                }}></View>
+                <View style={{
+                  width: '50%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Text style={{
+                    color: '#fff'
+                  }}>Card Information</Text>
+                </View>
+                <View style={{
+                  width: '25%',
+                  alignItems: 'flex-end',
+                  justifyContent: 'center',
+                }}>
+                  <TouchableOpacity onPress={() => goBack()}>
+                    <Image style={{
+                      height: 25,
+                      width: 25
+                    }} source={require('./assets/back.png')} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={styles.modalContent}>
+              <Text style={styles.textModal}>Tag</Text>
+                <TextInput
+                  style={styles.modalCardIdTextInput}
+                  maxLength={10}
+                  onChangeText={setModalTagText}
+                  value={modalTagText}
+                />
+                <Text style={styles.textModal}>Card ID</Text>
+                <TextInput
+                  style={styles.modalCardIdTextInput}
+                  maxLength={11}
+                  onChangeText={setModalCardIdText}
+                  value={modalCardIdText}
+                />
+                <View style={{
+                  flexDirection: 'row'
+                }}>
+                  <TouchableOpacity style={{
+                    borderRadius: 15,
+                    padding: 10,
+                    backgroundColor: '#258fff',
+                    marginRight: 10
+                  }} onPress={() => {editCard(); loadCards();}}>
+                    <Text style={{
+                      color: '#fff'
+                    }}>Save Changes</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={{
+                    borderRadius: 15,
+                    padding: 10,
+                    backgroundColor: '#ff2525'
+                  }} onPress={() => {deleteCard(); loadCards();}}>
+                    <Text style={{
+                      color: '#fff'
+                    }}>Delete Card</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
         </Modal>
         {views.map((view) => (
-          <TouchableOpacity key={view.idnumber} style={{
+          <TouchableOpacity key={view.idnumber} onPress={() => cardInfo(view.idnumber)} style={{
             padding: 15,
             marginTop: 10,
             height: 150,
